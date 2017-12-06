@@ -15,7 +15,7 @@ type
   TFileObj {. header: "TFile.h", importcpp: "TFile" .} = object of TObjectObj
   TFile* = ptr TFileObj
 
-proc newTFile*(filename, options: cstring=""): TFile {.importcpp: "new TFile(@)".}
+proc newTFile*(filename, options: cstring=""): TFile {.importcpp: "TFile::Open(@)".}
 proc Close(f: TFile) {.importcpp: "#.Close()".}
 proc close*(f: TFile) =
   f.Close
@@ -144,3 +144,21 @@ type
 
 proc newTCanvas*(): TCanvas {.importcpp: "new TCanvas(@)".}
 proc Print*(t: TH1F, filename: cstring) {.importcpp: "#.Write(@)".}
+
+type
+  TEnvObj {. header: "TEnv.h", importcpp: "TEnv" .} = object of TObjectObj
+  TEnv* = ptr TEnvObj
+
+var gEnv* {.importcpp: "gEnv".}: TEnv
+
+type
+  TObjArrayObj {. header: "TObjArray.h", importcpp: "TObjArray", inheritable .} = object of TObjectObj
+  TObjArray* = ptr TObjArrayObj
+
+proc At*(obj: TObjArray, i: cint): TObject {. importcpp: "#.At(@)" .}
+proc GetEntries*(obj: TObjArray): cint {. importcpp: "#.GetEntries()" .}
+proc GetEntriesFast*(obj: TObjArray): cint {. importcpp: "#.GetEntriesFast()" .}
+
+type
+  TClonesArrayObj {. header: "TClonesArray.h", importcpp: "TClonesArray", inheritable .} = object of TObjArrayObj
+  TClonesArray* = ptr TClonesArrayObj
