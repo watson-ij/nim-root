@@ -2,7 +2,7 @@
 {.passL: gorge("root-config --libs").}
 
 type
-  TObjectObj {. header: "TObject.h", importcpp: "TObject", inheritable .} = object
+  TObjectObj* {. header: "TObject.h", importcpp: "TObject", inheritable .} = object
   TObject* = ptr TObjectObj
 
 proc GetName*(this: TObject): cstring {.importcpp: "const_cast<char*>(#.GetName())", nosideeffect.}
@@ -12,16 +12,36 @@ proc Delete*(obj: TObject) {.importcpp: "#.Delete()".}
 proc Print*(obj: TObject, opt: cstring="") {.importcpp: "#.Print(@)".}
 
 type
+  TLorentzVectorObj {. header: "TLorentzVector.h", importcpp: "TLorentzVector" .} = object of TObjectObj
+  TLorentzVector* = ptr TLorentzVectorObj
+
+proc DeltaR*(l1: TLorentzVector, l2: TLorentzVector): cfloat {.importcpp: "#.DeltaR(*#)".}
+proc E*(l1: TLorentzVector): cfloat {.importcpp: "#.E()".}
+proc M*(l1: TLorentzVector): cfloat {.importcpp: "#.M()".}
+proc X*(l1: TLorentzVector): cfloat {.importcpp: "#.X()".}
+proc Y*(l1: TLorentzVector): cfloat {.importcpp: "#.Y()".}
+proc Z*(l1: TLorentzVector): cfloat {.importcpp: "#.Z()".}
+proc Px*(l1: TLorentzVector): cfloat {.importcpp: "#.Px()".}
+proc Py*(l1: TLorentzVector): cfloat {.importcpp: "#.Py()".}
+proc Pz*(l1: TLorentzVector): cfloat {.importcpp: "#.Pz()".}
+proc P*(l1: TLorentzVector): cfloat {.importcpp: "#.P()".}
+proc Pt*(l1: TLorentzVector): cfloat {.importcpp: "#.Pt()".}
+proc Rho*(l1: TLorentzVector): cfloat {.importcpp: "#.Rho()".}
+proc Eta*(l1: TLorentzVector): cfloat {.importcpp: "#.Eta()".}
+proc Phi*(l1: TLorentzVector): cfloat {.importcpp: "#.Phi()".}
+
+type
   TFileObj {. header: "TFile.h", importcpp: "TFile" .} = object of TObjectObj
   TFile* = ptr TFileObj
 
-proc newTFile*(filename, options: cstring=""): TFile {.importcpp: "TFile::Open(@)".}
+proc newTFile*(filename, options: cstring=""): TFile {.importcpp: "new TFile(@)".}
 proc Close(f: TFile) {.importcpp: "#.Close()".}
 proc close*(f: TFile) =
   f.Close
   f.Delete
-proc ls*(t: TFile) {. importcpp: "#.ls()" .}
-proc Get*(t: TFile, name: cstring): TObject {. importcpp: "#.Get(@)" .}
+proc ls*(f: TFile) {. importcpp: "#.ls()" .}
+proc Get*(f: TFile, name: cstring): TObject {. importcpp: "#.Get(@)" .}
+template get*[T](f: TFile, name: cstring): T = cast[T](f.Get(name))
 
 type
   TStyledObj {. header: "TH1.h", importcpp: "TStyled" .} = object of TObjectObj
@@ -126,24 +146,45 @@ type
 
 proc newTTree*(name: cstring="", title: cstring=""): TTree {.importcpp: "new TTree(@)".}
 proc Branch*(t: TTree, name: cstring, obj: pointer, leaves: cstring) {. importcpp: "#.Branch(@)" .}
+proc Branch*(t: TTree, name: cstring, obj: untyped) {. importcpp: "#.Branch(@)" .}
+proc Branch*(t: TTree, name: cstring, classname: cstring, obj: untyped) {. importcpp: "#.Branch(@)" .}
 proc Fill*(t: TTree) {. importcpp: "#.Fill()" .}
-proc SetBranchAddress*(t: TTree, name: cstring, obj: pointer) {. importcpp: "#.SetBranchAddress(@)" .}
+proc SetBranchAddress*(t: TTree, name: cstring, obj: untyped) {. importcpp: "#.SetBranchAddress(@)" .}
+template readBranch*[T](tree: TTree, name: cstring, vari): untyped =
+  ## Creates vari and sets trees variable name to var's address
+  var vari: T
+  tree.SetBranchAddress(name, vari.addr)
+
 proc GetEntry*(t: TTree, e: clong) {. importcpp: "#.GetEntry(@)" .}
 proc GetEntries*(t: TTree): clong {. importcpp: "#.GetEntries()" .}
 proc Draw*(t: TTree, exp: cstring, cut: cstring="", opt: cstring="") {.importcpp: "#.Draw(@)".}
+# TODO: Should be a TDirectory
+proc SetDirectory*(t: TTree, f: TFile) {. importcpp: "#.SetDirectory(@)" .}
 
 type
-  TH1FObj {. header: "TH1F.h", importcpp: "TH1F" .} = object of TStyledObj
-  TH1F* = ptr TH1FObj
+  TH1Obj {. header: "TH1F.h", importcpp: "TH1F" .} = object of TStyledObj
+  TH1* = ptr TH1Obj
 
-proc Draw*(t: TH1F, opt: cstring="") {.importcpp: "#.Draw(@)".}
+proc Draw*(t: TH1, opt: cstring="") {.importcpp: "#.Draw(@)".}
+proc Fill*(t: TH1, x, w: cfloat=1.0) {.importcpp: "#.Fill(@)".}
+
+type
+  TH1FObj {. header: "TH1F.h", importcpp: "TH1F" .} = object of TH1Obj
+  TH1F* = ptr TH1FObj
+proc newTH1F*(name, title: cstring, nbins: cint, st, en: cfloat): TH1F {. importcpp: "new TH1F(@)" .}
+
+type
+  TH1DObj {. header: "TH1D.h", importcpp: "TH1D" .} = object of TH1Obj
+  TH1D* = ptr TH1DObj
+proc newTH1D*(name, title: cstring, nbins: cint, st, en: cfloat): TH1D {. importcpp: "new TH1D(@)" .}
 
 type
   TCanvasObj {. header: "TCanvas.h", importcpp: "TCanvas" .} = object of TObjectObj
   TCanvas* = ptr TCanvasObj
 
 proc newTCanvas*(): TCanvas {.importcpp: "new TCanvas(@)".}
-proc Print*(t: TH1F, filename: cstring) {.importcpp: "#.Write(@)".}
+proc Print*(t: TCanvas, filename: cstring) {.importcpp: "#.Print(@)".}
+proc SetLogy*(t: TCanvas, filename: bool) {.importcpp: "#.SetLogy(@)".}
 
 type
   TEnvObj {. header: "TEnv.h", importcpp: "TEnv" .} = object of TObjectObj
@@ -153,12 +194,15 @@ var gEnv* {.importcpp: "gEnv".}: TEnv
 
 type
   TObjArrayObj {. header: "TObjArray.h", importcpp: "TObjArray", inheritable .} = object of TObjectObj
-  TObjArray* = ptr TObjArrayObj
+  TObjArray*[T] = ptr TObjArrayObj
 
-proc At*(obj: TObjArray, i: cint): TObject {. importcpp: "#.At(@)" .}
+proc at*(obj: TObjArray, i: clong): TObject {. importcpp: "#.At(@)" .}
+# Use a template so we don't generate a Nim function call
+template At*[T](obj: TObjArray[T], i: clong): untyped = cast[T](obj.at(i))
+template `[]`*[T](obj: TObjArray[T], i: clong): untyped = cast[T](obj.at(i))
 proc GetEntries*(obj: TObjArray): cint {. importcpp: "#.GetEntries()" .}
 proc GetEntriesFast*(obj: TObjArray): cint {. importcpp: "#.GetEntriesFast()" .}
 
 type
   TClonesArrayObj {. header: "TClonesArray.h", importcpp: "TClonesArray", inheritable .} = object of TObjArrayObj
-  TClonesArray* = ptr TClonesArrayObj
+  TClonesArray*[T] = ptr TClonesArrayObj
