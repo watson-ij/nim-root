@@ -1,6 +1,9 @@
 {.passC: gorge("root-config --cflags").}
 {.passL: gorge("root-config --libs").}
 
+import RtypesCore
+export RtypesCore
+
 type
   TObjectObj* {. header: "TObject.h", importcpp: "TObject", inheritable .} = object
   TObject* = ptr TObjectObj
@@ -46,6 +49,23 @@ template get*[T](f: TFile, name: cstring): T = cast[T](f.Get(name))
 type
   TStyledObj {. header: "TH1.h", importcpp: "TStyled" .} = object of TObjectObj
   TStyled* = ptr TStyledObj
+
+const # Colors from Rtypes.h
+  kWhite* = 0
+  kBlack* = 1
+  kGray* = 920
+  kRed* = 632
+  kGreen* = 416
+  kBlue* = 600
+  kYellow* = 400
+  kMagenta* = 616
+  kCyan* = 432
+  kOrange* = 800
+  kSpring* = 820
+  kTeal* = 840
+  kAzure* = 860
+  kViolet* = 880
+  kPink* = 900
 
 const # Fill Style
   kFEmpty* = 0
@@ -140,6 +160,11 @@ proc SetLineStyle*(obj: TStyled, color: cshort) {. importcpp: "#.SetLineStyle(@)
 proc GetLineWidth*(obj: TStyled, size: cshort) {. importcpp: "#.GetLineWidth(@)" .}
 proc SetLineWidth*(obj: TStyled, size: cshort) {. importcpp: "#.SetLineWidth(@)" .}
 
+type style* = object
+    color, linewidth: cshort
+
+proc newStyle*(color: cshort=kBlack, linewidth: cshort=2): style = style(color: color, linewidth: linewidth)
+
 type
   TTreeObj {. header: "TTree.h", importcpp: "TTree" .} = object of TStyledObj
   TTree* = ptr TTreeObj  
@@ -171,7 +196,12 @@ proc Fill*(t: TH1, x, w: cfloat=1.0) {.importcpp: "#.Fill(@)".}
 type
   TH1FObj {. header: "TH1F.h", importcpp: "TH1F" .} = object of TH1Obj
   TH1F* = ptr TH1FObj
-proc newTH1F*(name, title: cstring, nbins: cint, st, en: cfloat): TH1F {. importcpp: "new TH1F(@)" .}
+proc constructTH1F*(name, title: cstring, nbins: cint, st, en: cfloat): TH1F {. importcpp: "new TH1F(@)" .}
+proc newTH1F*(name, title: cstring, nbins: cint, st, en: cfloat, style: style=newStyle()): TH1F =
+  result = constructTH1F(name, title, nbins, st, en)
+  result.SetLineColor(style.color)
+  result.SetLineWidth(style.linewidth)
+  
 
 type
   TH1DObj {. header: "TH1D.h", importcpp: "TH1D" .} = object of TH1Obj
@@ -190,7 +220,7 @@ type
   TEnvObj {. header: "TEnv.h", importcpp: "TEnv" .} = object of TObjectObj
   TEnv* = ptr TEnvObj
 
-var gEnv* {.importcpp: "gEnv".}: TEnv
+# var gEnv* {.importcpp: "gEnv".}: TEnv
 
 type
   TObjArrayObj {. header: "TObjArray.h", importcpp: "TObjArray", inheritable .} = object of TObjectObj
@@ -206,3 +236,11 @@ proc GetEntriesFast*(obj: TObjArray): cint {. importcpp: "#.GetEntriesFast()" .}
 type
   TClonesArrayObj {. header: "TClonesArray.h", importcpp: "TClonesArray", inheritable .} = object of TObjArrayObj
   TClonesArray*[T] = ptr TClonesArrayObj
+
+type
+  TRefObj  {. header: "TRef.h", importcpp: "TRef", inheritable .} = object of TObjArrayObj
+  TRef* = ptr TRefObj
+
+type
+  TRefArrayObj  {. header: "TRefArray.h", importcpp: "TRefArray", inheritable .} = object of TObjArrayObj
+  TRefArray* = ptr TRefArrayObj
