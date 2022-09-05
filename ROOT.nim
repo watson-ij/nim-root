@@ -180,6 +180,12 @@ template readBranch*[T](tree: TTree, name: cstring, vari): untyped =
   var vari: T
   tree.SetBranchAddress(name, vari.addr)
 
+type
+  TBranchObj {.header: "TBranch.h", importcpp: "TBranch" .} = object of TObject
+  TBranch* = ptr TBranchObj
+
+proc GetBranch*(t: TTree, name: cstring): TBranch {.importcpp: "#.GetBranch(@)".}
+
 proc GetEntry*(t: TTree, e: clong) {. importcpp: "#.GetEntry(@)" .}
 proc GetEntries*(t: TTree): clong {. importcpp: "#.GetEntries()" .}
 proc Draw*(t: TTree, exp: cstring, cut: cstring="", opt: cstring="") {.importcpp: "#.Draw(@)".}
@@ -201,7 +207,7 @@ proc newTH1F*(name, title: cstring, nbins: cint, st, en: cfloat, style: style=ne
   result = constructTH1F(name, title, nbins, st, en)
   result.SetLineColor(style.color)
   result.SetLineWidth(style.linewidth)
-  
+
 
 type
   TH1DObj {. header: "TH1D.h", importcpp: "TH1D" .} = object of TH1Obj
@@ -244,3 +250,5 @@ type
 type
   TRefArrayObj  {. header: "TRefArray.h", importcpp: "TRefArray", inheritable .} = object of TObjArrayObj
   TRefArray* = ptr TRefArrayObj
+
+proc GetListOfBranches*(t: TTree): TObjArray[TObject] {.importcpp: "#.GetListOfBranches()".}
