@@ -167,14 +167,14 @@ proc newStyle*(color: cshort=kBlack, linewidth: cshort=2): style = style(color: 
 
 type
   TTreeObj {. header: "TTree.h", importcpp: "TTree" .} = object of TStyledObj
-  TTree* = ptr TTreeObj  
+  TTree* = ptr TTreeObj
 
 proc newTTree*(name: cstring="", title: cstring=""): TTree {.importcpp: "new TTree(@)".}
 proc Branch*(t: TTree, name: cstring, obj: pointer, leaves: cstring) {. importcpp: "#.Branch(@)" .}
-proc Branch*(t: TTree, name: cstring, obj: untyped) {. importcpp: "#.Branch(@)" .}
-proc Branch*(t: TTree, name: cstring, classname: cstring, obj: untyped) {. importcpp: "#.Branch(@)" .}
+proc Branch*[T](t: TTree, name: cstring, obj: ptr T) {. importcpp: "#.Branch(@)" .}
+proc Branch*[T](t: TTree, name: cstring, classname: cstring, obj: ptr T) {. importcpp: "#.Branch(@)" .}
 proc Fill*(t: TTree) {. importcpp: "#.Fill()" .}
-proc SetBranchAddress*(t: TTree, name: cstring, obj: untyped) {. importcpp: "#.SetBranchAddress(@)" .}
+proc SetBranchAddress*[T](t: TTree, name: cstring, obj: ptr T) {. importcpp: "#.SetBranchAddress(@)" .}
 template readBranch*[T](tree: TTree, name: cstring, vari): untyped =
   ## Creates vari and sets trees variable name to var's address
   var vari: T
