@@ -37,6 +37,15 @@ type
   TFileObj {. header: "TFile.h", importcpp: "TFile" .} = object of TObjectObj
   TFile* = ptr TFileObj
 
+type
+  TKeyObj {. header: "TKey.h", importcpp: "TKey" .} = object of TObjectObj
+  TKey* = ptr TKeyObj
+
+#type
+#  TKeyObj {. header: "TKey.h", importcpp: "TKey" .} = object of TObjectObj
+#  TKey* = ptr TKeyObj
+
+
 proc newTFile*(filename, options: cstring=""): TFile {.importcpp: "new TFile(@)".}
 proc Close(f: TFile) {.importcpp: "#.Close()".}
 proc close*(f: TFile) =
@@ -44,6 +53,8 @@ proc close*(f: TFile) =
   f.Delete
 proc ls*(f: TFile) {. importcpp: "#.ls()" .}
 proc Get*(f: TFile, name: cstring): TObject {. importcpp: "#.Get(@)" .}
+proc FindKey*(f: TFile, name: cstring): TKey {. importcpp: "#.FindKey(@)" .}
+proc ReadObj*(f: TKey): TObject {. importcpp: "#.ReadObj()" .}
 template get*[T](f: TFile, name: cstring): T = cast[T](f.Get(name))
 
 type
@@ -167,18 +178,24 @@ proc newStyle*(color: cshort=kBlack, linewidth: cshort=2): style = style(color: 
 
 type
   TTreeObj {. header: "TTree.h", importcpp: "TTree" .} = object of TStyledObj
-  TTree* = ptr TTreeObj  
+  TTree* = ptr TTreeObj
 
 proc newTTree*(name: cstring="", title: cstring=""): TTree {.importcpp: "new TTree(@)".}
 proc Branch*(t: TTree, name: cstring, obj: pointer, leaves: cstring) {. importcpp: "#.Branch(@)" .}
-proc Branch*(t: TTree, name: cstring, obj: untyped) {. importcpp: "#.Branch(@)" .}
-proc Branch*(t: TTree, name: cstring, classname: cstring, obj: untyped) {. importcpp: "#.Branch(@)" .}
+proc Branch*[T](t: TTree, name: cstring, obj: ptr T) {. importcpp: "#.Branch(@)" .}
+proc Branch*[T](t: TTree, name: cstring, classname: cstring, obj: ptr T) {. importcpp: "#.Branch(@)" .}
 proc Fill*(t: TTree) {. importcpp: "#.Fill()" .}
-proc SetBranchAddress*(t: TTree, name: cstring, obj: untyped) {. importcpp: "#.SetBranchAddress(@)" .}
+proc SetBranchAddress*[T](t: TTree, name: cstring, obj: ptr T) {. importcpp: "#.SetBranchAddress(@)" .}
 template readBranch*[T](tree: TTree, name: cstring, vari): untyped =
   ## Creates vari and sets trees variable name to var's address
   var vari: T
   tree.SetBranchAddress(name, vari.addr)
+
+type
+  TBranchObj {.header: "TBranch.h", importcpp: "TBranch" .} = object of TObject
+  TBranch* = ptr TBranchObj
+
+proc GetBranch*(t: TTree, name: cstring): TBranch {.importcpp: "#.GetBranch(@)".}
 
 proc GetEntry*(t: TTree, e: clong) {. importcpp: "#.GetEntry(@)" .}
 proc GetEntries*(t: TTree): clong {. importcpp: "#.GetEntries()" .}
@@ -201,7 +218,7 @@ proc newTH1F*(name, title: cstring, nbins: cint, st, en: cfloat, style: style=ne
   result = constructTH1F(name, title, nbins, st, en)
   result.SetLineColor(style.color)
   result.SetLineWidth(style.linewidth)
-  
+
 
 type
   TH1DObj {. header: "TH1D.h", importcpp: "TH1D" .} = object of TH1Obj
@@ -244,3 +261,5 @@ type
 type
   TRefArrayObj  {. header: "TRefArray.h", importcpp: "TRefArray", inheritable .} = object of TObjArrayObj
   TRefArray* = ptr TRefArrayObj
+
+proc GetListOfBranches*(t: TTree): TObjArray[TObject] {.importcpp: "#.GetListOfBranches()".}
