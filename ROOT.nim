@@ -37,6 +37,15 @@ type
   TFileObj {. header: "TFile.h", importcpp: "TFile" .} = object of TObjectObj
   TFile* = ptr TFileObj
 
+type
+  TKeyObj {. header: "TKey.h", importcpp: "TKey" .} = object of TObjectObj
+  TKey* = ptr TKeyObj
+
+#type
+#  TKeyObj {. header: "TKey.h", importcpp: "TKey" .} = object of TObjectObj
+#  TKey* = ptr TKeyObj
+
+
 proc newTFile*(filename, options: cstring=""): TFile {.importcpp: "new TFile(@)".}
 proc Close(f: TFile) {.importcpp: "#.Close()".}
 proc close*(f: TFile) =
@@ -44,6 +53,8 @@ proc close*(f: TFile) =
   f.Delete
 proc ls*(f: TFile) {. importcpp: "#.ls()" .}
 proc Get*(f: TFile, name: cstring): TObject {. importcpp: "#.Get(@)" .}
+proc FindKey*(f: TFile, name: cstring): TKey {. importcpp: "#.FindKey(@)" .}
+proc ReadObj*(f: TKey): TObject {. importcpp: "#.ReadObj()" .}
 template get*[T](f: TFile, name: cstring): T = cast[T](f.Get(name))
 
 type
